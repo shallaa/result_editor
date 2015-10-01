@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    html,body{margin:0;padding:0,border:0,height:100%}
+  </style>
+</head>
+<body>
+  <div id="result-view"></div>
+  <button id="btn-result">GET RESULT</button>
+  <button id="btn-size">CHANGE SIZE</button>
+  <button id="btn-image">CHANGE IMAGE</button>
+  <button id="btn-text">CHANGE TEXT</button>
+  <button id="btn-add">ADD / REMOVE TEXT</button>
+  <div id="result-console"></div>
+  <script src="js/jquery.js"></script>
+  <script src="js/underscore.js"></script>
+  <script src="js/backbone.js"></script>
+  <script src="js/easel.js"></script>
+  <script src="js/tween.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // <!-- EXAMPLE
+
+    var resultEditor = new ResultEditor({
+      image:'images/default.cover.png',
+      imageWidth: 298,
+      imageHeight: 498,
+      texts:[
+        { text:'test1', font:'40px Arial', color: '#FFF', x:0, y:0 },
+        { text:'test2', font:'40px Dotum', color: '#000', x:0, y:100 },
+        { text:'test3', font:'40px Gulim', color: '#DFDFDF', x:100, y:200 }
+      ]
+    });
+
+    $('#result-view').html(resultEditor.render().el);
+
+    // EXAMPLE -->
+
+    // <!-- TEST
+
+    var test = {
+      size: true,
+      image: true,
+      text: true,
+      add: true
+    };
+
+    $('#btn-result').click(function() {
+      $('#result-console').prepend($('<p>' + resultEditor.getResultData() +'</p>'));
+    });
+
+    $('#btn-size').click(function() {
+      test.size = !test.size;
+
+      if(test.size) {
+        resultEditor.changeSize(298, 498);
+      } else {
+        resultEditor.changeSize(298, 334);
+      }
+    });
+
+    $('#btn-image').click(function() {
+      test.image = !test.image;
+
+      if(test.image) {
+        resultEditor.changeImage('images/default.cover.png');
+      } else {
+        resultEditor.changeImage('images/default.thumbnail.vertical.png');
+      }
+    });
+
+    $('#btn-text').click(function() {
+      test.text = !test.text;
+
+      if(test.text) {
+        resultEditor.changeText(
+          { id:0, text:'test1', font:'40px Arial', color: '#FFF', x:0, y:0 }
+        );
+      } else {
+        resultEditor.changeText(
+          { id:0, text:'테스트1', font:'40px Arial', color: '#FFF', x:0, y:0 }
+        );
+      }
+    });
+
+    $('#btn-add').click(function() {
+      test.add = !test.add;
+
+      if(test.add) {
+        resultEditor.removeText(3);
+      } else {
+        resultEditor.addText(
+          { id: 3, text:'test4', font:'40px Arial', color: '#000', x:100, y:300 }
+        );
+      }
+    });
+
+    // TEST -->
+
+  </script>
+</body>
+</html>
