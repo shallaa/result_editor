@@ -20,6 +20,31 @@ var ResultEditor = (function() {
       this.text = new createjs.Text(this.options.text, this.options.font, this.options.color);
       this.addChild(this.text);
 
+      this.editZone = new createjs.Container();
+      this.addChild(this.editZone);
+
+      this.border = new createjs.Shape();
+      this.editZone.addChild(this.border);
+
+      this.point = new createjs.Shape();
+      this.point.graphics
+        .clear()
+        .beginFill('white')
+        .beginStroke('black')
+        .drawEllipse(-5, -5, 10, 10)
+        .endFill();
+      this.editZone.addChild(this.point);
+
+      // textInput 은 외부로 빼서 하나를 사용하는 구조로.
+      //var input = document.createElement('input');
+      //input.type = 'text';
+      //input.style.cssText = 'position:absolute;top:0px;left:0px';
+      //$('body').append(input);
+      //
+      //this.textInput = new createjs.DOMElement(input);
+      //this.textInput.visible = false;
+      //this.addChild(this.textInput);
+
       this.mouseChildren = false;
       this.cursor = 'move';
 
@@ -52,11 +77,22 @@ var ResultEditor = (function() {
 
     fn.updateSize = function() {
       var bounds = this.text.getBounds();
+
       this.zone.graphics
         .clear()
         .beginFill('white')
         .drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
         .endFill();
+
+      this.border.graphics
+        .clear()
+        .beginStroke('black')
+        .drawRect(bounds.x, bounds.y, bounds.width, bounds.height)
+        .moveTo(bounds.width / 2, 0)
+        .lineTo(bounds.width / 2, -bounds.height / 2)
+        .endFill();
+
+      this.point.setTransform(bounds.width / 2, -bounds.height / 2);
     };
 
     return TextItem;
@@ -88,14 +124,20 @@ var ResultEditor = (function() {
       }, options));
 
       this.canvas = document.createElement('canvas');
+      this.$el.append(this.canvas);
+
       this.stage = new createjs.Stage(this.canvas);
-      this.stage.autoClear = false;
       this.stage.enableMouseOver(50);
 
       this.image = new Image();
       this.imageBitmap = null;
       this.texts = [];
 
+      this.renderSize();
+      this.renderImage();
+
+      this.listenTo(this.model, 'change:imageWidth change:imageHeight', this.renderSize);
+      this.listenTo(this.model, 'change:image', this.renderImage);
       this.listenTo(this.model, 'change', this.render);
 
       if(!renderInterval) {
@@ -105,10 +147,8 @@ var ResultEditor = (function() {
       }
     },
 
-    render: function() {
-      console.log('render');
-
-      this.$el.append(this.canvas);
+    renderSize: function() {
+      console.log('renderSize');
 
       var canvas = this.canvas;
       var width = this.model.get('imageWidth');
@@ -118,11 +158,27 @@ var ResultEditor = (function() {
       canvas.height = height;
       canvas.style.width = width + 'px';
       canvas.style.height = height + 'px';
+    },
+
+    renderImage: function() {
+      console.log('renderImage');
 
       var _this = this;
 
-      this.stage.removeChild(this.imageBitmap);
-      this.imageBitmap = null;
+      this.image.onload = function() {
+        _this.stage.removeChild(_this.imageBitmap);
+        _this.imageBitmap = null;
+
+        _this.imageBitmap = new createjs.Bitmap(_this.image);
+        _this.stage.addChildAt(_this.imageBitmap, 0);
+      };
+      this.image.src = this.model.get('image');
+    },
+
+    render: function() {
+      console.log('render');
+
+      var _this = this;
 
       _.each(this.texts, function(text) {
         _this.stage.removeChild(text);
@@ -131,12 +187,6 @@ var ResultEditor = (function() {
       });
 
       this.texts.length = 0;
-
-      this.image.onload = function() {
-        _this.imageBitmap = new createjs.Bitmap(_this.image);
-        _this.stage.addChildAt(_this.imageBitmap, 0);
-      };
-      this.image.src = this.model.get('image');
 
       var textItem;
       var id = 0;
