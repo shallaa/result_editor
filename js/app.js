@@ -21,6 +21,7 @@ var ResultEditor = (function() {
       this.addChild(this.text);
 
       this.editZone = new createjs.Container();
+      this.editZone.visible = false;
       this.addChild(this.editZone);
 
       this.border = new createjs.Shape();
@@ -48,32 +49,34 @@ var ResultEditor = (function() {
       this.mouseChildren = false;
       this.cursor = 'move';
 
-      this.on('mousedown', function(e) {
-        var sx = this.x - e.stageX;
-        var sy = this.y - e.stageY;
-        var moveListener;
-        var upListener;
-
-        this.parent.setChildIndex(this, this.parent.numChildren - 1);
-
-        moveListener = this.on('pressmove', function(e) {
-          this.setTransform(e.stageX + sx, e.stageY + sy);
-        }, this);
-
-        upListener = this.on('pressup', function() {
-          this.off('pressmove', moveListener);
-          this.off('pressup', upListener);
-
-          this.options.x = this.x;
-          this.options.y = this.y;
-          this.dispatchEvent('positionChanged');
-        }, this);
-      }, this);
-
       this.updateSize();
     };
 
     fn = TextItem.prototype = new createjs.Container;
+
+    fn.setEditMode = function(edit, e) {
+      this.editZone.visible = edit;
+
+      var sx = this.x - e.stageX;
+      var sy = this.y - e.stageY;
+      var moveListener;
+      var upListener;
+
+      this.parent.setChildIndex(this, this.parent.numChildren - 1);
+
+      moveListener = this.on('pressmove', function(e) {
+        this.setTransform(e.stageX + sx, e.stageY + sy);
+      }, this);
+
+      upListener = this.on('pressup', function() {
+        this.off('pressmove', moveListener);
+        this.off('pressup', upListener);
+
+        this.options.x = this.x;
+        this.options.y = this.y;
+        this.dispatchEvent('positionChanged');
+      }, this);
+    };
 
     fn.updateSize = function() {
       var bounds = this.text.getBounds();
@@ -196,6 +199,15 @@ var ResultEditor = (function() {
 
         textItem = new TextItem(text);
         textItem.setTransform(text.x, text.y);
+        textItem.addEventListener('mousedown', function(e) {
+          var idx = _this.texts.indexOf(e.target);
+
+          if(idx != -1) {
+            _.each(_this.texts, function(text, index) {
+              text.setEditMode(index == idx, e);
+            });
+          }
+        });
         textItem.addEventListener('positionChanged', function(e) {
           _this.changeText(e.target.options, false);
         });
